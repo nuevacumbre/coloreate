@@ -1,0 +1,400 @@
+<!DOCTYPE HTML>
+<html lang="es">
+	<!-- CONFIGURACION DEL HTML -->
+	<head>
+		<title>..::COLOREATE::..</title>
+		<meta charset="UTF-8" />
+		<!--meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" /-->
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+		<link rel="stylesheet" href="assets/css/estilo.css">
+		<meta name="description" content="Página WEB de infusiones y te">
+        <meta name="author" content="Christopher Espinoza">
+		    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous"-->
+			<script>
+				window.onload = function () {
+					// Variables
+					let baseDeDatos = [
+						{
+							id: 1,
+							nombre: 'Patata',
+							precio: 100,
+							imagen: 'https://source.unsplash.com/random/500x500/?potato&sig=1'
+						},
+						{
+							id: 2,
+							nombre: 'Cebolla',
+							precio: 1200,
+							imagen: 'https://source.unsplash.com/random/500x500/?onion&sig=2'
+						},
+						{
+							id: 3,
+							nombre: 'Calabacin',
+							precio: 2100,
+							imagen: 'https://source.unsplash.com/random/500x500/?zucchini&sig=3'
+						},
+						{
+							id: 4,
+							nombre: 'Fresas',
+							precio: 600,
+							imagen: 'https://source.unsplash.com/random/500x500/?burrs&sig=4'
+						}
+		
+					];
+					
+					let $items = document.querySelector('#items');
+					let carrito = [];
+					let total = 0;
+					let $carrito = document.querySelector('#carrito');
+					let $total = document.querySelector('#total');
+					let $botonVaciar = document.querySelector('#boton-vaciar');
+		
+					// Funciones
+					function renderItems() {
+						for (let info of baseDeDatos) {
+							// Estructura
+							let miNodo = document.createElement('div');
+							miNodo.classList.add('card', 'col-sm-4');
+							// Body
+							let miNodoCardBody = document.createElement('div');
+							miNodoCardBody.classList.add('card-body');
+							// Titulo
+							let miNodoTitle = document.createElement('h5');
+							miNodoTitle.classList.add('card-title');
+							miNodoTitle.textContent = info['nombre'];
+							// Imagen
+							let miNodoImagen = document.createElement('img');
+							miNodoImagen.classList.add('img-fluid');
+							miNodoImagen.setAttribute('src', info['imagen']);
+							// Precio
+							let miNodoPrecio = document.createElement('p');
+							miNodoPrecio.classList.add('card-text');
+							miNodoPrecio.textContent = '$' + info['precio'];
+							// Boton 
+							let miNodoBoton = document.createElement('button');
+							miNodoBoton.classList.add('btn', 'btn-primary');
+							miNodoBoton.textContent = '+';
+							miNodoBoton.setAttribute('marcador', info['id']);
+							miNodoBoton.addEventListener('click', anyadirCarrito);
+							// Insertamos
+							miNodoCardBody.appendChild(miNodoImagen);
+							miNodoCardBody.appendChild(miNodoTitle);
+							miNodoCardBody.appendChild(miNodoPrecio);
+							miNodoCardBody.appendChild(miNodoBoton);
+							miNodo.appendChild(miNodoCardBody);
+							$items.appendChild(miNodo);
+						}
+					}
+		
+					function anyadirCarrito () {
+						// Anyadimos el Nodo a nuestro carrito
+						carrito.push(this.getAttribute('marcador'))
+						// Calculo el total
+						calcularTotal();
+						// Renderizamos el carrito 
+						renderizarCarrito();
+					}
+		
+					function renderizarCarrito() {
+						// Vaciamos todo el html
+						$carrito.textContent = '';
+						// Quitamos los duplicados
+						let carritoSinDuplicados = [...new Set(carrito)];
+						// Generamos los Nodos a partir de carrito
+						carritoSinDuplicados.forEach(function (item, indice) {
+							// Obtenemos el item que necesitamos de la variable base de datos
+							let miItem = baseDeDatos.filter(function(itemBaseDatos) {
+								return itemBaseDatos['id'] == item;
+							});
+							// Cuenta el número de veces que se repite el producto
+							let numeroUnidadesItem = carrito.reduce(function (total, itemId) {
+								return itemId === item ? total += 1 : total;
+							}, 0);
+							// Creamos el nodo del item del carrito
+							let miNodo = document.createElement('li');
+							miNodo.classList.add('list-group-item', 'text-right', 'mx-2');
+							miNodo.textContent = `${numeroUnidadesItem} x ${miItem[0]['nombre']} - ${miItem[0]['precio']}$`;
+							// Boton de borrar
+							let miBoton = document.createElement('button');
+							miBoton.classList.add('btn', 'btn-danger', 'mx-5');
+							miBoton.textContent = 'X';
+							miBoton.style.marginLeft = '1rem';
+							miBoton.setAttribute('item', item);
+							miBoton.addEventListener('click', borrarItemCarrito);
+							// Mezclamos nodos
+							miNodo.appendChild(miBoton);
+							$carrito.appendChild(miNodo);
+						});
+					}
+		
+					function borrarItemCarrito() {
+						// Obtenemos el producto ID que hay en el boton pulsado
+						let id = this.getAttribute('item');
+						// Borramos todos los productos
+						carrito = carrito.filter(function (carritoId) {
+							return carritoId !== id;
+						});
+						// volvemos a renderizar
+						renderizarCarrito();
+						// Calculamos de nuevo el precio
+						calcularTotal();
+					}
+		
+					function calcularTotal() {
+						// Limpiamos precio anterior
+						total = 0;
+						// Recorremos el array del carrito
+						for (let item of carrito) {
+							// De cada elemento obtenemos su precio
+							let miItem = baseDeDatos.filter(function(itemBaseDatos) {
+								return itemBaseDatos['id'] == item;
+							});
+							total = total + miItem[0]['precio'];
+						}
+						// Formateamos el total para que solo tenga dos decimales
+						let totalDosDecimales = total.toFixed(0); //se cambia el 2 por 0
+						// Renderizamos el precio en el HTML
+						$total.textContent = totalDosDecimales;
+					}
+		
+					function vaciarCarrito() {
+						// Limpiamos los productos guardados
+						carrito = [];
+						// Renderizamos los cambios
+						renderizarCarrito();
+						calcularTotal();
+					}
+		
+					// Eventos
+					$botonVaciar.addEventListener('click', vaciarCarrito);
+		
+					// Inicio
+					renderItems();
+				} 
+			</script>
+	</head>
+	<body class="no-sidebar is-preload">
+		<div id="page-wrapper">
+
+			<!-- Header -->
+				<section id="header">
+					<div class="container">
+
+						<!-- Logo -->
+						<img src="logo.png" >
+						<h1 id="logo"><a href="index.html">COLOREATE</a></h1>
+						<p>Nos encargamos de darle color a tus infusiones...</p>
+
+						<!-- Nav -->
+						<nav id="nav">
+							<ul>
+								<li><a class="icon solid fa-home" href="index.html"><span>Inicio</span></a></li>
+								<li>
+									<a href="te_infusiones.html" class="icon solid fa-mug-hot"><span>Té e Infusiones</span></a>
+									<ul>
+										<li><a href="#">JENJIBRE CANELA</a></li>
+										<li><a href="#">TÉ DE JAZMÍN</a></li>
+										<li><a href="#">INFUSIÓN DE HIBISCO</a></li>
+										<li>
+											<a href="#">TÉ VERDE</a>
+											<ul>
+												<li><a href="#">TÉ VERDE MAO JIAN</a></li>
+												<li><a href="#">TÉ VERDE GUNPOWDER</a></li>
+												<li><a href="#">TÉ VERDE GRADO 1</a></li>
+												<li><a href="#">TÉ VERDE CON FRUTILLA</a></li>
+												<li><a href="#">TÉ VERDE CON GUAYABA</a></li>
+												<li><a href="#">TÉ VERDE CON MANZANA</a></li>
+												<li><a href="#">TÉ VERDE CON DURAZNO</a></li>
+												<li><a href="#">TÉ VERDE CON MENTA</a></li>
+												<li><a href="#">SPICY MUSE</a></li>
+											</ul>
+										</li>
+										<li>
+											<a href="#">TÉ ROJO</a>
+											<ul>
+												<li><a href="#">TÉ ROJO PU-ERH</a></li>
+												<li><a href="#">TÉ ROJO CON BOTON DE ROSA</a></li>
+												<li><a href="#">TÉ ROJO CON CARDAMOMO</a></li>
+											</ul>
+										</li>
+										<li>
+											<a href="#">TÉ OOLONG</a>
+											<ul>
+												<li><a href="#">TÉ OOLONG TIE KUAN YIN</a></li>
+												<li><a href="#">TÉ OOLONG CON ARÁNDANO</a></li>
+												<li><a href="#">TÉ OOLONG CON LEMONGRASS </a></li>
+											</ul>
+										</li>
+										<li>
+											<a href="#">TÉ BLANCO</a>
+											<ul>
+												<li><a href="#">TÉ BLANCO PAI MU DAN</a></li>
+											</ul>
+										</li>
+										<li>
+											<a href="#">TÉ NEGRO</a>
+											<ul>
+												<li><a href="#">TÉ NEGRO CEYLÁN</a></li>
+												<li><a href="#">TÉ NEGRO GONG FU</a></li>
+												<li><a href="#">TÉ NEGRO CON HIBISCO</a></li>
+												<li><a href="#">TÉ NEGRO CON GINSENG</a></li>
+											</ul>
+										</li> 
+										<li>
+											<a href="#">BLOOMING TEA</a>
+											<ul>
+												<li><a href="#">BLOOMING TEA</a></li>
+											</ul>
+										</li>
+
+									</ul>
+								</li>
+								<li><a class="icon solid fa-birthday-cake" href="regalos.html"><span>Regalos</span></a></li>
+								<li><a class="icon solid fa-users" href="#nosotros"><span>Nosotros</span></a></li>
+								<li><a class="icon solid fa-envelope" href="#footer"><span>CONTACTO</span></a></li>
+							</ul>
+						</nav>
+
+					</div>
+				</section>
+
+			<!-- Main -->
+				<section id="main">
+					<div class="container">
+						<div id="content">
+
+							<!-- Post -->
+								<article class="box post">
+									<header>    
+										<h2>¿Buscando un regalo? <strong>Regala tradición y sabor,</strong> el aroma<br />
+											milenario del té es una alternativa para vivir hermosos momentos!</h2>
+									</header>
+									<span class="image featured"><img src="images/pic08.jpg" alt="" /></span>
+									<h3>¡Un regalo original o un accesorio! Mira estas novedades que constantemente vamos renovando.</h3>
+									<p>Si estás buscando regalos para amantes del té, o quieres experimentar la cultura real del té, esta colección es para ti:</p>
+									<p>Encontrar regalos para amantes del té puede ser una tarea difícil. Si tienes que hacer un regalo a un Tea Lover y cuando te hablan más alla del té verde o té negro como por ejemplo té matcha, té oolong o té pu erh ya sientes que te están hablando en chino…</p>
+									<p>Te presentamos 15 Regalos sorprendentes para amantes del té. Desde teteras originales y clásicas, tés exclusivos y productos gourmet, hasta los accesorios más modernos y las últimas tendencias.</p>
+								</article>
+
+								<div class="row">
+									<!-- Elementos generados a partir del JSON -->
+									<main id="items" class="col-sm-8 row"></main>
+									<!-- Carrito -->
+									<aside class="col-sm-4">
+										<h2>Carrito</h2>
+										<!-- Elementos del carrito -->
+										<ul id="carrito" class="list-group"></ul>
+										<hr>
+										<!-- Precio total -->
+										<p class="text-right">Total: $<span id="total"></span> CLP;</p>
+										<ul class="links">
+											<li><button id="boton-vaciar" class="btn btn-danger">Vaciar</button></li><li><form id="command" action="/registrar/caja/WEBPAY/pagoOnline.do" method="post">
+												<input type="submit" class="submitButton" style="height: 45px;" value="Ir a Webpay">
+											  <input type="hidden" name="CSRFP" value="291AB8ABF75311D41E4E2C7289C91EE2">
+											</form></li>
+										</ul>
+										
+										
+									</aside>
+								</div>
+							
+						</div>
+					</div>
+				</section>
+
+			<!-- Footer -->
+            <section id="footer">
+                <div class="container">
+                    <header>   
+                        <h2>No dude en ponerse en <strong>contacto</strong> si tiene alguna pregunta</h2>
+                    </header>
+                    <div class="row">
+                        <div class="col-6 col-12-medium">
+                            <section>
+
+                                <form method="post" action="contacto.php">
+                                    <div class="row gtr-50">
+                                        <div class="col-6 col-12-small">
+                                            <input id="name" name="name" placeholder="Nombre" type="text" required=""/>
+                                        </div>
+                                        <div class="col-6 col-12-small">
+                                            <input id="email" name="email" placeholder="Email" type="text" required=""/>
+                                        </div>
+                                        <div class="col-12">
+                                            <textarea id="message" name="message" placeholder="Mensaje" required=""></textarea>
+                                        </div>
+                                        <div class="col-12">
+                                            <!--a href="#" class="form-button-submit button icon solid fa-envelope" id="submit" type="submit" name="submit">Enviar Mensaje</a-->
+                                            <input id="submit" type="submit" name="submit" value="Enviar Mensaje" class="form-button-submit button icon solid fa-envelope"/>
+                                        </div>
+                                    </div>
+                                </form>
+
+                            </section>
+                        </div>
+                        <div class="col-6 col-12-medium">
+                            <section>
+                                <p>Estamos para ayudarte, junto a nuestros profesionales podemos orientar tus necesidades ó si solo buscas 
+                                    disfrutar de una deliciosa bebida podemos brindarte los mejores aromas según tus gustos. Atrevete a salir 
+                                    de la rutina y ayuda a tu cuerpo para mantenerte sano con <strong>COLOREATE</strong>. 
+                                </p>
+                                <div class="row">
+                                    <div class="col-6 col-12-small">
+                                        <ul class="icons">
+                                            <li class="icon solid fa-home">
+                                                Iquique<br />
+                                                Región Tarapaca<br />
+                                                CHILE
+                                            </li>
+                                            <li class="icon solid fa-phone">
+                                                (+569) 889-45968
+                                            </li>
+                                            <li class="icon solid fa-envelope">
+                                                <a href="#">contacto@coloreate.cl</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-6 col-12-small">
+                                        <ul class="icons">
+                                            <li class="icon brands fa-twitter">
+                                                <a href="#">@coloreate</a>
+                                            </li>
+                                            <li class="icon brands fa-instagram">
+                                                <a href="#">instagram.com/coloreate</a>
+                                            </li>
+                                            <li class="icon brands fa-dribbble">
+                                                <a href="#">dribbble.com/coloreate</a>
+                                            </li>
+                                            <li class="icon brands fa-facebook-f">
+                                                <a href="#">facebook.com/coloreate</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+                <div id="copyright" class="container">
+                    <ul class="links">
+                        <li>&copy; Coloreate. Todos los derechos reservados.</li><li>Desarrollado por: <a href="http://www.nuevacumbre.cl">Nueva Cumbre</a></li>
+					</ul>
+					<ul class="links">
+						<li>
+							<a href="http://www.nuevacumbre.cl" target="_blank"><img src="images/nuevacumbre.jpg" alt=""></a>
+						</li>
+					</ul>
+                </div>
+            </section>         
+
+		</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
